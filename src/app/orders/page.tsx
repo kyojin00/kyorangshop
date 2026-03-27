@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Nav from '@/components/Nav'
-import OrdersClient from '@/components/OrdersClient'
+import OrdersClient, { OrdersClientProps } from '@/components/OrdersClient'
 
 export default async function OrdersPage() {
   const supabase = await createClient()
@@ -28,10 +28,12 @@ export default async function OrdersPage() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
+  const props: OrdersClientProps = { orders: orders ?? [] }
+
   return (
     <>
       <Nav />
-      <OrdersClient orders={orders ?? []} />
+      <OrdersClient {...props} />
     </>
   )
 }
