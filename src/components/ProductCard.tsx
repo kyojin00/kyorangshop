@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Product {
   id: string
@@ -28,8 +29,14 @@ export default function ProductCard({ product }: { product: Product }) {
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-5xl group-hover:animate-float">
-              🐱
+            <div className="w-full h-full flex items-center justify-center">
+              <Image
+                src="/logo.png"
+                alt="교랑"
+                width={64}
+                height={64}
+                className="opacity-40"
+              />
             </div>
           )}
 
