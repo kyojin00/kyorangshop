@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
-export default function CheckoutSuccessPage() {
+export const dynamic = 'force-dynamic'
+
+export default function CheckoutSuccessClient() {
   const params = useSearchParams()
   const router = useRouter()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
