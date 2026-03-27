@@ -45,7 +45,8 @@ export default function AdminClient({ products: initialProducts, orders: initial
   const handleImageUpload = async (): Promise<string[]> => {
     const urls: string[] = []
     for (const file of imageFiles) {
-      const path = `products/${Date.now()}_${file.name}`
+      const ext = file.name.split('.').pop()
+      const path = `products/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
       const { error } = await supabase.storage.from('shop-images').upload(path, file)
       if (!error) {
         const { data } = supabase.storage.from('shop-images').getPublicUrl(path)
