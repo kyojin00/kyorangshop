@@ -2,12 +2,16 @@
 @import "tailwindcss";
 
 :root {
-  --cream: #FDF6EE;
-  --peach: #F5E6D3;
-  --warm-purple: #7C6BB5;
-  --deep-purple: #3D2E6B;
-  --soft-brown: #8B6F5C;
-  --text-dark: #2A2035;
+  --cream: #FFF5F7;
+  --peach: #FFE4EC;
+  --pink-light: #FFD6E4;
+  --pink-mid: #F9A8C9;
+  --pink-main: #E8629A;
+  --pink-deep: #C44D82;
+  --warm-purple: #C97BB2;
+  --text-dark: #3A1F2E;
+  --text-mid: #7A4F65;
+  --text-light: #B08898;
 }
 
 * { box-sizing: border-box; }
@@ -24,7 +28,7 @@ body {
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-10px); }
 }
 
 @keyframes fadeUp {

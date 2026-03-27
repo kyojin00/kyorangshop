@@ -15,7 +15,7 @@ export default function ProductCard({ product }: { product: Product }) {
     <Link href={`/products/${product.id}`}>
       <div
         className="group bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl"
-        style={{ boxShadow: '0 2px 12px rgba(61,46,107,0.08)' }}
+        style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.08)' }}
       >
         {/* 이미지 */}
         <div
@@ -33,25 +33,25 @@ export default function ProductCard({ product }: { product: Product }) {
               <Image
                 src="/logo.png"
                 alt="교랑"
-                width={64}
-                height={64}
-                className="opacity-40"
+                width={56}
+                height={56}
+                className="opacity-30"
               />
             </div>
           )}
 
           {/* 품절 뱃지 */}
           {product.stock === 0 && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-              <span className="text-white text-sm font-bold bg-black/50 px-3 py-1 rounded-full">품절</span>
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+              <span className="text-white text-xs font-bold bg-black/50 px-3 py-1 rounded-full">품절</span>
             </div>
           )}
 
           {/* 카테고리 뱃지 */}
           {product.category && (
             <div
-              className="absolute top-3 left-3 text-xs px-2.5 py-1 rounded-full font-medium"
-              style={{ backgroundColor: 'rgba(253,246,238,0.9)', color: 'var(--soft-brown)' }}
+              className="absolute top-2.5 left-2.5 text-xs px-2.5 py-1 rounded-full font-medium"
+              style={{ backgroundColor: 'rgba(255,255,255,0.88)', color: 'var(--pink-deep)' }}
             >
               {product.category}
             </div>
@@ -61,17 +61,17 @@ export default function ProductCard({ product }: { product: Product }) {
         {/* 정보 */}
         <div className="p-4">
           <p
-            className="font-medium text-sm leading-snug mb-1 line-clamp-2"
+            className="font-medium text-sm leading-snug mb-1.5 line-clamp-2"
             style={{ color: 'var(--text-dark)' }}
           >
             {product.name}
           </p>
           <p
             className="font-bold text-base"
-            style={{ color: 'var(--deep-purple)' }}
+            style={{ color: 'var(--pink-deep)' }}
           >
             {product.price.toLocaleString()}
-            <span className="text-xs font-normal ml-0.5">원</span>
+            <span className="text-xs font-normal ml-0.5" style={{ color: 'var(--text-light)' }}>원</span>
           </p>
         </div>
       </div>
