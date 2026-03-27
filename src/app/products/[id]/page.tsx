@@ -3,13 +3,14 @@ import { notFound } from 'next/navigation'
 import Nav from '@/components/Nav'
 import ProductDetailClient from '@/components/ProductDetailClient'
 
-export default async function ProductDetailPage({ params }: { params: { id: string } }) {
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const { data: product } = await supabase
     .from('shop_products')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('is_active', true)
     .single()
 
