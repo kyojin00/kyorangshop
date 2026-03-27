@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
 export default function CheckoutSuccessClient() {
   const params = useSearchParams()
   const router = useRouter()
