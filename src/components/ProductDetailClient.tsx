@@ -36,13 +36,12 @@ function StarRating({ rating, onChange, size = 20 }: { rating: number; onChange?
           onMouseEnter={() => onChange && setHover(star)}
           onMouseLeave={() => onChange && setHover(0)}
           style={{
-            background: 'none', border: 'none', cursor: onChange ? 'pointer' : 'default', padding: 0,
+            background: 'none', border: 'none',
+            cursor: onChange ? 'pointer' : 'default', padding: 0,
             color: star <= (hover || rating) ? '#FBBF24' : '#E5E7EB',
             fontSize: `${size}px`, lineHeight: 1,
           }}
-        >
-          ★
-        </button>
+        >★</button>
       ))}
     </div>
   )
@@ -60,9 +59,9 @@ export default function ProductDetailClient({
   const [selectedImage, setSelectedImage] = useState(0)
   const [added, setAdded] = useState(false)
 
-  // 리뷰 상태
   const [reviews, setReviews] = useState<Review[]>([])
   const [myReview, setMyReview] = useState<Review | null>(null)
+  const [hasPurchased, setHasPurchased] = useState(false)
   const [reviewTab, setReviewTab] = useState<'list' | 'write'>('list')
   const [rating, setRating] = useState(5)
   const [content, setContent] = useState('')
@@ -72,22 +71,38 @@ export default function ProductDetailClient({
   const supabase = createClient()
 
   useEffect(() => {
-    const fetchReviews = async () => {
-      const { data } = await supabase
+    const fetchData = async () => {
+      // 리뷰 조회
+      const { data: reviewData } = await supabase
         .from('shop_reviews')
         .select('*')
         .eq('product_id', product.id)
         .order('created_at', { ascending: false })
-      if (data) {
-        setReviews(data)
+
+      if (reviewData) {
+        setReviews(reviewData)
         if (userId) {
-          const mine = data.find(r => r.user_id === userId) ?? null
+          const mine = reviewData.find(r => r.user_id === userId) ?? null
           setMyReview(mine)
           if (mine) { setRating(mine.rating); setContent(mine.content) }
         }
       }
+
+      // 구매 여부 확인 (paid, shipping, delivered 상태 주문 중 해당 상품 포함 여부)
+      if (userId) {
+        const { data: orderItems } = await supabase
+          .from('shop_order_items')
+          .select('id, order_id, shop_orders!inner(status, user_id)')
+          .eq('product_id', product.id)
+          .filter('shop_orders.user_id', 'eq', userId)
+          .filter('shop_orders.status', 'in', '("paid","shipping","delivered")')
+
+        if (orderItems && orderItems.length > 0) {
+          setHasPurchased(true)
+        }
+      }
     }
-    fetchReviews()
+    fetchData()
   }, [product.id, userId])
 
   const avgRating = reviews.length > 0
@@ -122,22 +137,14 @@ export default function ProductDetailClient({
   }
 
   const handleSubmitReview = async () => {
-    if (!userId) { router.push('/login'); return }
-    if (!content.trim()) return
+    if (!userId || !content.trim()) return
     setReviewLoading(true)
-
     if (myReview) {
       const { data } = await supabase.from('shop_reviews').update({ rating, content }).eq('id', myReview.id).select().single()
-      if (data) {
-        setReviews(prev => prev.map(r => r.id === myReview.id ? data : r))
-        setMyReview(data)
-      }
+      if (data) { setReviews(prev => prev.map(r => r.id === myReview.id ? data : r)); setMyReview(data) }
     } else {
       const { data } = await supabase.from('shop_reviews').insert({ user_id: userId, product_id: product.id, rating, content }).select().single()
-      if (data) {
-        setReviews(prev => [data, ...prev])
-        setMyReview(data)
-      }
+      if (data) { setReviews(prev => [data, ...prev]); setMyReview(data) }
     }
     setReviewLoading(false)
     setReviewTab('list')
@@ -152,17 +159,18 @@ export default function ProductDetailClient({
     setContent('')
   }
 
+  // 리뷰 작성 가능 여부
+  const canWriteReview = userId && hasPurchased
+
   return (
     <main className="pt-16 min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
       <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #FFB6D3, #E8629A, #C97BB2)' }} />
 
       <div className="max-w-5xl mx-auto px-4 py-10">
 
-        <button
-          onClick={() => router.back()}
+        <button onClick={() => router.back()}
           className="flex items-center gap-1.5 text-sm mb-8 transition-opacity hover:opacity-60"
-          style={{ color: 'var(--pink-deep)' }}
-        >
+          style={{ color: 'var(--pink-deep)' }}>
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M19 12H5M12 5l-7 7 7 7"/>
           </svg>
@@ -171,7 +179,6 @@ export default function ProductDetailClient({
 
         {/* 상품 기본 정보 */}
         <div className="grid md:grid-cols-2 gap-10 items-start">
-          {/* 이미지 */}
           <div>
             <div className="relative aspect-square rounded-3xl overflow-hidden mb-3" style={{ backgroundColor: 'var(--peach)' }}>
               {product.images?.[selectedImage] ? (
@@ -205,7 +212,6 @@ export default function ProductDetailClient({
             )}
           </div>
 
-          {/* 정보 */}
           <div className="flex flex-col gap-5">
             <div className="rounded-3xl p-6 bg-white" style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.08)' }}>
               <h1 className="text-2xl font-bold leading-snug mb-3" style={{ color: 'var(--text-dark)' }}>{product.name}</h1>
@@ -292,13 +298,18 @@ export default function ProductDetailClient({
         <div className="mt-12">
           <div className="flex items-center justify-between border-b-2 mb-8" style={{ borderColor: 'var(--pink-light)' }}>
             <div className="flex">
-              {(['list', 'write'] as const).map(t => (
-                <button key={t} onClick={() => setReviewTab(t)}
+              <button onClick={() => setReviewTab('list')}
+                className="px-6 py-3 text-sm font-bold border-b-2 -mb-0.5 transition-colors"
+                style={reviewTab === 'list' ? { borderColor: 'var(--pink-main)', color: 'var(--pink-deep)' } : { borderColor: 'transparent', color: 'var(--text-light)' }}>
+                리뷰 {reviews.length}
+              </button>
+              {canWriteReview && (
+                <button onClick={() => setReviewTab('write')}
                   className="px-6 py-3 text-sm font-bold border-b-2 -mb-0.5 transition-colors"
-                  style={reviewTab === t ? { borderColor: 'var(--pink-main)', color: 'var(--pink-deep)' } : { borderColor: 'transparent', color: 'var(--text-light)' }}>
-                  {t === 'list' ? `리뷰 ${reviews.length}` : myReview ? '내 리뷰 수정' : '리뷰 작성'}
+                  style={reviewTab === 'write' ? { borderColor: 'var(--pink-main)', color: 'var(--pink-deep)' } : { borderColor: 'transparent', color: 'var(--text-light)' }}>
+                  {myReview ? '내 리뷰 수정' : '리뷰 작성'}
                 </button>
-              ))}
+              )}
             </div>
             {avgRating && (
               <div className="flex items-center gap-2 mb-2">
@@ -316,10 +327,10 @@ export default function ProductDetailClient({
                 <div className="text-center py-16 rounded-3xl" style={{ backgroundColor: 'var(--peach)' }}>
                   <Image src="/logo.png" alt="교랑" width={48} height={48} className="mx-auto opacity-25 mb-3" />
                   <p className="text-sm" style={{ color: 'var(--text-mid)' }}>아직 리뷰가 없어요</p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-light)' }}>첫 번째 리뷰를 남겨주세요!</p>
-                  {userId && (
+                  <p className="text-xs mt-1 mb-4" style={{ color: 'var(--text-light)' }}>구매 후 첫 번째 리뷰를 남겨주세요!</p>
+                  {canWriteReview && (
                     <button onClick={() => setReviewTab('write')}
-                      className="mt-4 text-sm px-5 py-2 rounded-full text-white"
+                      className="text-sm px-5 py-2 rounded-full text-white"
                       style={{ backgroundColor: 'var(--pink-main)' }}>
                       리뷰 작성하기
                     </button>
@@ -353,48 +364,53 @@ export default function ProductDetailClient({
                   ))}
                 </div>
               )}
+
+              {/* 구매 안 한 경우 안내 */}
+              {userId && !hasPurchased && (
+                <div className="mt-4 text-center py-3 rounded-xl text-xs" style={{ backgroundColor: 'var(--peach)', color: 'var(--text-light)' }}>
+                  구매한 상품에만 리뷰를 작성할 수 있어요
+                </div>
+              )}
+              {!userId && (
+                <div className="mt-4 text-center py-3 rounded-xl text-xs" style={{ backgroundColor: 'var(--peach)', color: 'var(--text-light)' }}>
+                  로그인 후 구매하시면 리뷰를 작성할 수 있어요
+                </div>
+              )}
             </div>
           )}
 
           {/* 리뷰 작성 */}
-          {reviewTab === 'write' && (
+          {reviewTab === 'write' && canWriteReview && (
             <div className="bg-white rounded-3xl p-8" style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.08)' }}>
-              {!userId ? (
-                <div className="text-center py-8">
-                  <p className="text-sm mb-4" style={{ color: 'var(--text-mid)' }}>로그인 후 리뷰를 작성할 수 있어요</p>
-                  <button onClick={() => router.push('/login')} className="text-sm px-5 py-2.5 rounded-full text-white" style={{ backgroundColor: 'var(--pink-main)' }}>로그인하기</button>
+              <div className="space-y-5">
+                <div>
+                  <p className="text-sm font-medium mb-3" style={{ color: 'var(--text-mid)' }}>별점</p>
+                  <StarRating rating={rating} onChange={setRating} size={32} />
                 </div>
-              ) : (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-sm font-medium mb-3" style={{ color: 'var(--text-mid)' }}>별점</p>
-                    <StarRating rating={rating} onChange={setRating} size={32} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium mb-2" style={{ color: 'var(--text-mid)' }}>리뷰 내용</p>
-                    <textarea
-                      value={content}
-                      onChange={e => setContent(e.target.value)}
-                      placeholder="상품에 대한 솔직한 리뷰를 남겨주세요"
-                      rows={5}
-                      className="w-full rounded-2xl px-4 py-3 text-sm focus:outline-none resize-none"
-                      style={{ border: '1.5px solid var(--pink-light)', backgroundColor: 'var(--cream)', color: 'var(--text-dark)' }}
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <button onClick={handleSubmitReview} disabled={reviewLoading || !content.trim()}
-                      className="flex-1 py-3.5 rounded-2xl text-white font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50"
-                      style={{ background: 'linear-gradient(135deg, var(--pink-main), var(--pink-deep))', boxShadow: '0 4px 16px rgba(232,98,154,0.35)' }}>
-                      {reviewLoading ? '저장 중...' : myReview ? '수정하기' : '등록하기'}
-                    </button>
-                    <button onClick={() => setReviewTab('list')}
-                      className="px-6 py-3.5 rounded-2xl text-sm font-medium"
-                      style={{ backgroundColor: 'var(--peach)', color: 'var(--text-mid)' }}>
-                      취소
-                    </button>
-                  </div>
+                <div>
+                  <p className="text-sm font-medium mb-2" style={{ color: 'var(--text-mid)' }}>리뷰 내용</p>
+                  <textarea
+                    value={content}
+                    onChange={e => setContent(e.target.value)}
+                    placeholder="상품에 대한 솔직한 리뷰를 남겨주세요"
+                    rows={5}
+                    className="w-full rounded-2xl px-4 py-3 text-sm focus:outline-none resize-none"
+                    style={{ border: '1.5px solid var(--pink-light)', backgroundColor: 'var(--cream)', color: 'var(--text-dark)' }}
+                  />
                 </div>
-              )}
+                <div className="flex gap-3">
+                  <button onClick={handleSubmitReview} disabled={reviewLoading || !content.trim()}
+                    className="flex-1 py-3.5 rounded-2xl text-white font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg, var(--pink-main), var(--pink-deep))', boxShadow: '0 4px 16px rgba(232,98,154,0.35)' }}>
+                    {reviewLoading ? '저장 중...' : myReview ? '수정하기' : '등록하기'}
+                  </button>
+                  <button onClick={() => setReviewTab('list')}
+                    className="px-6 py-3.5 rounded-2xl text-sm font-medium"
+                    style={{ backgroundColor: 'var(--peach)', color: 'var(--text-mid)' }}>
+                    취소
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
