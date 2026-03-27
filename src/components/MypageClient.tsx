@@ -63,296 +63,351 @@ export default function MypageClient({
   }
 
   return (
-    <main className="min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
+    <main className="pt-16 min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
 
-      {/* 프로필 헤더 */}
+      {/* 상단 핑크 바 */}
+      <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #FFB6D3, #E8629A, #C97BB2)' }} />
+
+      {/* 페이지 헤더 */}
       <div
-        className="relative overflow-hidden pt-20 pb-24 px-4 text-center"
+        className="py-12"
         style={{ background: 'linear-gradient(160deg, #FFCDE0 0%, #F0709E 60%, #C44D82 100%)' }}
       >
-        {/* 배경 장식 원 */}
-        <div className="absolute top-[-40px] right-[-60px] w-56 h-56 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
-        <div className="absolute bottom-[-30px] left-[-40px] w-44 h-44 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
-        <div className="absolute top-10 left-10 w-20 h-20 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
-
-        <div className="relative">
-          {/* 아바타 */}
+        <div className="max-w-6xl mx-auto px-6 flex items-center gap-6">
           <div
-            className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center"
+            className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0"
             style={{
               backgroundColor: 'rgba(255,255,255,0.25)',
-              border: '3px solid rgba(255,255,255,0.6)',
-              boxShadow: '0 8px 24px rgba(180,40,100,0.25)',
+              border: '3px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 8px 24px rgba(180,40,100,0.2)',
             }}
           >
-            <Image src="/logo.png" alt="프로필" width={52} height={52} />
+            <Image src="/logo.png" alt="프로필" width={44} height={44} />
           </div>
-          <p className="text-white font-bold text-xl mb-1">{email.split('@')[0]}</p>
-          <p className="text-white/70 text-sm">{email}</p>
-        </div>
-      </div>
-
-      {/* 스탯 카드 - 헤더에 겹쳐서 떠오르는 형태 */}
-      <div className="max-w-lg mx-auto px-4 -mt-12 relative z-10">
-        <div
-          className="bg-white rounded-3xl p-5"
-          style={{ boxShadow: '0 8px 32px rgba(232,98,154,0.15)' }}
-        >
-          <div className="grid grid-cols-4 gap-1">
+          <div>
+            <p className="text-white font-bold text-2xl">{email.split('@')[0]}</p>
+            <p className="text-white/70 text-sm mt-0.5">{email}</p>
+          </div>
+          <div className="ml-auto flex gap-6">
             {[
-              { label: '전체주문', value: String(orders.length), unit: '건', action: () => setTab('orders') },
-              { label: '배송중', value: String(shippingCount), unit: '건', action: () => setTab('orders') },
-              { label: '장바구니', value: String(cartCount), unit: '개', action: () => router.push('/cart') },
-              { label: '포인트', value: totalPoints >= 1000 ? (totalPoints / 1000).toFixed(1) + 'K' : String(totalPoints), unit: 'P', action: () => setTab('points') },
+              { label: '전체 주문', value: `${orders.length}건` },
+              { label: '배송 중', value: `${shippingCount}건` },
+              { label: '포인트', value: `${totalPoints.toLocaleString()}P` },
             ].map((stat, i) => (
-              <button
-                key={i}
-                onClick={stat.action}
-                className="flex flex-col items-center py-3 rounded-2xl transition-colors hover:bg-pink-50 group"
-              >
-                <p
-                  className="text-2xl font-bold leading-none mb-1 transition-colors group-hover:text-pink-500"
-                  style={{ color: 'var(--pink-deep)' }}
-                >
-                  {stat.value}
-                </p>
-                <p className="text-xs font-medium" style={{ color: 'var(--text-light)' }}>{stat.unit}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--text-light)', fontSize: '10px' }}>{stat.label}</p>
-              </button>
+              <div key={i} className="text-center">
+                <p className="text-white font-bold text-xl">{stat.value}</p>
+                <p className="text-white/70 text-xs mt-0.5">{stat.label}</p>
+              </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 mt-5">
+      {/* 메인 레이아웃 */}
+      <div className="max-w-6xl mx-auto px-6 py-10 flex gap-8 items-start">
 
-        {/* 배송 중 배너 */}
-        {shippingCount > 0 && (
+        {/* 사이드바 */}
+        <aside className="w-64 flex-shrink-0 sticky top-24">
           <div
-            className="rounded-2xl p-4 flex items-center gap-3 mb-4"
-            style={{ background: 'linear-gradient(135deg, #FFE4EC, #FFCDE0)' }}
+            className="bg-white rounded-3xl overflow-hidden"
+            style={{ boxShadow: '0 4px 24px rgba(232,98,154,0.1)' }}
           >
-            <div
-              className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}
-            >
-              <svg width="20" height="20" fill="none" stroke="var(--pink-deep)" strokeWidth="1.8" viewBox="0 0 24 24">
-                <rect x="1" y="3" width="15" height="13" rx="1"/>
-                <path d="M16 8h4l3 5v4h-7V8z"/>
-                <circle cx="5.5" cy="18.5" r="2.5"/>
-                <circle cx="18.5" cy="18.5" r="2.5"/>
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-bold" style={{ color: 'var(--pink-deep)' }}>
-                배송 중인 주문 {shippingCount}건
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-mid)' }}>곧 도착할 거예요!</p>
-            </div>
-            <button
-              onClick={() => setTab('orders')}
-              className="ml-auto text-xs font-medium px-3 py-1.5 rounded-full bg-white transition-opacity hover:opacity-70"
-              style={{ color: 'var(--pink-deep)' }}
-            >
-              확인
-            </button>
-          </div>
-        )}
+            <div className="p-4">
+              <p className="text-xs font-bold px-3 mb-2" style={{ color: 'var(--text-light)' }}>마이페이지</p>
+              {[
+                {
+                  key: 'orders',
+                  label: '주문내역',
+                  count: orders.length,
+                  icon: (
+                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                      <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+                      <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+                    </svg>
+                  ),
+                },
+                {
+                  key: 'points',
+                  label: '포인트',
+                  count: totalPoints,
+                  unit: 'P',
+                  icon: (
+                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 6v6l4 2"/>
+                    </svg>
+                  ),
+                },
+              ].map(item => (
+                <button
+                  key={item.key}
+                  onClick={() => setTab(item.key as 'orders' | 'points')}
+                  className="w-full flex items-center justify-between px-3 py-3 rounded-xl transition-all mb-1"
+                  style={tab === item.key
+                    ? { backgroundColor: 'var(--peach)', color: 'var(--pink-deep)' }
+                    : { color: 'var(--text-mid)' }
+                  }
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span style={{ color: tab === item.key ? 'var(--pink-deep)' : 'var(--text-light)' }}>
+                      {item.icon}
+                    </span>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </div>
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full"
+                    style={{
+                      backgroundColor: tab === item.key ? 'var(--pink-main)' : 'var(--peach)',
+                      color: tab === item.key ? 'white' : 'var(--pink-deep)',
+                    }}
+                  >
+                    {item.count.toLocaleString()}{item.unit ?? ''}
+                  </span>
+                </button>
+              ))}
 
-        {/* 빠른 메뉴 */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          {[
-            {
-              label: '장바구니',
-              sub: `${cartCount}개 담겨있어요`,
-              action: () => router.push('/cart'),
-              icon: (
-                <svg width="20" height="20" fill="none" stroke="var(--pink-deep)" strokeWidth="1.8" viewBox="0 0 24 24">
-                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-                  <line x1="3" y1="6" x2="21" y2="6"/>
-                  <path d="M16 10a4 4 0 01-8 0"/>
-                </svg>
-              ),
-            },
-            {
-              label: '주문내역',
-              sub: `총 ${orders.length}건`,
-              action: () => router.push('/orders'),
-              icon: (
-                <svg width="20" height="20" fill="none" stroke="var(--pink-deep)" strokeWidth="1.8" viewBox="0 0 24 24">
-                  <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
-                  <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
-                </svg>
-              ),
-            },
-          ].map((menu, i) => (
-            <button
-              key={i}
-              onClick={menu.action}
-              className="bg-white rounded-2xl p-4 flex items-center gap-3 text-left transition-all hover:shadow-md"
-              style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}
-            >
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: 'var(--peach)' }}
-              >
-                {menu.icon}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-dark)' }}>{menu.label}</p>
-                <p className="text-xs truncate" style={{ color: 'var(--text-light)' }}>{menu.sub}</p>
-              </div>
-            </button>
-          ))}
-        </div>
+              <div className="border-t mt-2 pt-2" style={{ borderColor: 'var(--pink-light)' }}>
+                <button
+                  onClick={() => router.push('/cart')}
+                  className="w-full flex items-center justify-between px-3 py-3 rounded-xl transition-all mb-1"
+                  style={{ color: 'var(--text-mid)' }}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <svg width="16" height="16" fill="none" stroke="var(--text-light)" strokeWidth="1.8" viewBox="0 0 24 24">
+                      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                      <line x1="3" y1="6" x2="21" y2="6"/>
+                      <path d="M16 10a4 4 0 01-8 0"/>
+                    </svg>
+                    <span className="text-sm font-medium">장바구니</span>
+                  </div>
+                  {cartCount > 0 && (
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: 'var(--peach)', color: 'var(--pink-deep)' }}
+                    >
+                      {cartCount}
+                    </span>
+                  )}
+                </button>
 
-        {/* 탭 */}
-        <div
-          className="flex bg-white rounded-2xl p-1 mb-5"
-          style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}
-        >
-          {(['orders', 'points'] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all"
-              style={tab === t
-                ? { backgroundColor: 'var(--pink-main)', color: 'white', boxShadow: '0 2px 8px rgba(232,98,154,0.3)' }
-                : { color: 'var(--text-light)' }
-              }
-            >
-              {t === 'orders' ? `주문내역 ${orders.length}건` : `포인트 ${totalPoints.toLocaleString()}P`}
-            </button>
-          ))}
-        </div>
-
-        {/* 주문내역 탭 */}
-        {tab === 'orders' && (
-          <div className="space-y-3 mb-8">
-            {orders.length === 0 ? (
-              <div className="text-center py-16">
-                <Image src="/logo.png" alt="교랑" width={52} height={52} className="mx-auto opacity-20 mb-3" />
-                <p className="text-sm" style={{ color: 'var(--text-light)' }}>주문 내역이 없어요</p>
                 <button
                   onClick={() => router.push('/')}
-                  className="mt-4 text-sm px-5 py-2 rounded-full text-white"
-                  style={{ backgroundColor: 'var(--pink-main)' }}
+                  className="w-full flex items-center gap-2.5 px-3 py-3 rounded-xl transition-all"
+                  style={{ color: 'var(--text-mid)' }}
                 >
-                  쇼핑하러 가기
+                  <svg width="16" height="16" fill="none" stroke="var(--text-light)" strokeWidth="1.8" viewBox="0 0 24 24">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                  </svg>
+                  <span className="text-sm font-medium">쇼핑 계속하기</span>
                 </button>
               </div>
-            ) : orders.map(order => (
-              <div
-                key={order.id}
-                className="bg-white rounded-2xl overflow-hidden"
-                style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}
-              >
-                {/* 주문 헤더 */}
-                <div
-                  className="px-5 py-3 flex items-center justify-between"
-                  style={{ backgroundColor: 'var(--peach)' }}
-                >
-                  <div>
-                    <p className="text-xs font-medium" style={{ color: 'var(--text-mid)' }}>
-                      {new Date(order.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </p>
-                    <p className="text-xs" style={{ color: 'var(--text-light)' }}>
-                      주문번호 {order.id.slice(0, 8).toUpperCase()}
-                    </p>
-                  </div>
-                  <span
-                    className="text-xs font-bold px-3 py-1 rounded-full text-white"
-                    style={{ backgroundColor: STATUS_COLOR[order.status] ?? '#ccc' }}
-                  >
-                    {STATUS_LABEL[order.status] ?? order.status}
-                  </span>
-                </div>
+            </div>
 
-                {/* 주문 상품 */}
-                <div className="px-5 py-4">
-                  <div className="space-y-2 mb-3">
-                    {order.shop_order_items.map((item, i) => (
-                      <div key={i} className="flex justify-between items-center">
-                        <p className="text-sm flex-1 mr-4 truncate" style={{ color: 'var(--text-mid)' }}>
-                          {item.product_name}
-                          <span className="text-xs ml-1" style={{ color: 'var(--text-light)' }}>×{item.quantity}</span>
-                        </p>
-                        <p className="text-sm font-medium flex-shrink-0" style={{ color: 'var(--text-dark)' }}>
-                          {(item.product_price * item.quantity).toLocaleString()}원
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <div
-                    className="flex justify-between items-center pt-3 border-t"
-                    style={{ borderColor: 'var(--pink-light)' }}
+            <div className="px-4 pb-4">
+              <button
+                onClick={handleLogout}
+                className="w-full py-2.5 rounded-xl text-sm transition-colors hover:bg-pink-50"
+                style={{ color: 'var(--text-light)', border: '1px solid var(--pink-light)' }}
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* 콘텐츠 */}
+        <div className="flex-1 min-w-0">
+
+          {/* 배송 중 배너 */}
+          {shippingCount > 0 && (
+            <div
+              className="rounded-2xl p-5 flex items-center gap-4 mb-6"
+              style={{ background: 'linear-gradient(135deg, #FFE4EC, #FFCDE0)' }}
+            >
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}
+              >
+                <svg width="22" height="22" fill="none" stroke="var(--pink-deep)" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <rect x="1" y="3" width="15" height="13" rx="1"/>
+                  <path d="M16 8h4l3 5v4h-7V8z"/>
+                  <circle cx="5.5" cy="18.5" r="2.5"/>
+                  <circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+              </div>
+              <div>
+                <p className="font-bold" style={{ color: 'var(--pink-deep)' }}>
+                  배송 중인 주문이 {shippingCount}건 있어요
+                </p>
+                <p className="text-sm mt-0.5" style={{ color: 'var(--text-mid)' }}>
+                  곧 도착할 거예요!
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* 주문내역 */}
+          {tab === 'orders' && (
+            <div>
+              <h2 className="text-xl font-bold mb-5" style={{ color: 'var(--text-dark)' }}>주문내역</h2>
+              {orders.length === 0 ? (
+                <div
+                  className="bg-white rounded-3xl p-16 text-center"
+                  style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.07)' }}
+                >
+                  <Image src="/logo.png" alt="교랑" width={56} height={56} className="mx-auto opacity-20 mb-4" />
+                  <p className="font-medium" style={{ color: 'var(--text-mid)' }}>주문 내역이 없어요</p>
+                  <p className="text-sm mt-1 mb-5" style={{ color: 'var(--text-light)' }}>마음에 드는 상품을 담아보세요</p>
+                  <button
+                    onClick={() => router.push('/')}
+                    className="text-white px-6 py-2.5 rounded-full text-sm font-medium"
+                    style={{ backgroundColor: 'var(--pink-main)' }}
                   >
-                    <span className="text-xs" style={{ color: 'var(--text-light)' }}>총 결제금액</span>
-                    <span className="font-bold" style={{ color: 'var(--pink-deep)' }}>
-                      {order.total_amount.toLocaleString()}원
-                    </span>
-                  </div>
+                    쇼핑하러 가기
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders.map(order => (
+                    <div
+                      key={order.id}
+                      className="bg-white rounded-2xl overflow-hidden"
+                      style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.07)' }}
+                    >
+                      {/* 주문 헤더 */}
+                      <div
+                        className="px-6 py-4 flex items-center justify-between"
+                        style={{ backgroundColor: 'var(--peach)' }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <p className="text-sm font-medium" style={{ color: 'var(--text-dark)' }}>
+                              {new Date(order.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            </p>
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--text-light)' }}>
+                              주문번호 {order.id.slice(0, 8).toUpperCase()}
+                            </p>
+                          </div>
+                        </div>
+                        <span
+                          className="text-xs font-bold px-4 py-1.5 rounded-full text-white"
+                          style={{ backgroundColor: STATUS_COLOR[order.status] ?? '#ccc' }}
+                        >
+                          {STATUS_LABEL[order.status] ?? order.status}
+                        </span>
+                      </div>
+
+                      {/* 주문 상품 */}
+                      <div className="px-6 py-5">
+                        <div className="space-y-3 mb-4">
+                          {order.shop_order_items.map((item, i) => (
+                            <div key={i} className="flex items-center justify-between">
+                              <div className="flex items-center gap-3 min-w-0 flex-1 mr-4">
+                                <div
+                                  className="w-10 h-10 rounded-lg flex-shrink-0"
+                                  style={{ backgroundColor: 'var(--peach)' }}
+                                />
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium truncate" style={{ color: 'var(--text-dark)' }}>
+                                    {item.product_name}
+                                  </p>
+                                  <p className="text-xs" style={{ color: 'var(--text-light)' }}>
+                                    {item.quantity}개
+                                  </p>
+                                </div>
+                              </div>
+                              <p className="text-sm font-medium flex-shrink-0" style={{ color: 'var(--text-dark)' }}>
+                                {(item.product_price * item.quantity).toLocaleString()}원
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                        <div
+                          className="flex justify-between items-center pt-4 border-t"
+                          style={{ borderColor: 'var(--pink-light)' }}
+                        >
+                          <span className="text-sm" style={{ color: 'var(--text-light)' }}>총 결제금액</span>
+                          <span className="font-bold text-lg" style={{ color: 'var(--pink-deep)' }}>
+                            {order.total_amount.toLocaleString()}원
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 포인트 */}
+          {tab === 'points' && (
+            <div>
+              <h2 className="text-xl font-bold mb-5" style={{ color: 'var(--text-dark)' }}>포인트</h2>
+
+              {/* 포인트 잔액 카드 */}
+              <div
+                className="rounded-3xl p-8 mb-6 flex items-center justify-between relative overflow-hidden"
+                style={{ background: 'linear-gradient(135deg, #FFCDE0, #E8629A)' }}
+              >
+                <div className="absolute top-[-30px] right-[-30px] w-40 h-40 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <div>
+                  <p className="text-white/80 text-sm mb-1">보유 포인트</p>
+                  <p className="text-white font-bold text-5xl">
+                    {totalPoints.toLocaleString()}
+                    <span className="text-2xl ml-1 font-medium">P</span>
+                  </p>
+                </div>
+                <div className="relative">
+                  <Image src="/logo.png" alt="교랑" width={80} height={80} className="opacity-30" />
                 </div>
               </div>
-            ))}
-          </div>
-        )}
 
-        {/* 포인트 탭 */}
-        {tab === 'points' && (
-          <div className="mb-8">
-            <div
-              className="rounded-3xl p-6 mb-4 text-center relative overflow-hidden"
-              style={{ background: 'linear-gradient(135deg, #FFCDE0, #E8629A)' }}
-            >
-              <div className="absolute top-[-20px] right-[-20px] w-32 h-32 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
-              <p className="text-white/80 text-sm mb-2 relative">보유 포인트</p>
-              <p className="text-white font-bold text-5xl relative">
-                {totalPoints.toLocaleString()}
-                <span className="text-2xl ml-1 font-medium">P</span>
-              </p>
-            </div>
-
-            <div className="space-y-3">
+              {/* 포인트 내역 */}
               {points.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-sm" style={{ color: 'var(--text-light)' }}>포인트 내역이 없어요</p>
-                </div>
-              ) : points.map((point, i) => (
                 <div
-                  key={i}
-                  className="bg-white rounded-2xl px-5 py-4 flex justify-between items-center"
-                  style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}
+                  className="bg-white rounded-3xl p-16 text-center"
+                  style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.07)' }}
                 >
-                  <div>
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-dark)' }}>
-                      {point.reason ?? '포인트 적립'}
-                    </p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-light)' }}>
-                      {new Date(point.created_at).toLocaleDateString('ko-KR')}
-                    </p>
-                  </div>
-                  <span
-                    className="font-bold text-base"
-                    style={{ color: point.amount > 0 ? 'var(--pink-deep)' : '#9CA3AF' }}
-                  >
-                    {point.amount > 0 ? '+' : ''}{point.amount.toLocaleString()}P
-                  </span>
+                  <p className="font-medium" style={{ color: 'var(--text-mid)' }}>포인트 내역이 없어요</p>
+                  <p className="text-sm mt-1" style={{ color: 'var(--text-light)' }}>구매 시 포인트가 적립돼요</p>
                 </div>
-              ))}
+              ) : (
+                <div
+                  className="bg-white rounded-3xl overflow-hidden"
+                  style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.07)' }}
+                >
+                  <div className="px-6 py-4 border-b" style={{ borderColor: 'var(--pink-light)' }}>
+                    <p className="font-medium text-sm" style={{ color: 'var(--text-mid)' }}>포인트 내역</p>
+                  </div>
+                  {points.map((point, i) => (
+                    <div
+                      key={i}
+                      className="px-6 py-4 flex items-center justify-between border-b last:border-0"
+                      style={{ borderColor: 'var(--pink-light)' }}
+                    >
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-dark)' }}>
+                          {point.reason ?? '포인트 적립'}
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: 'var(--text-light)' }}>
+                          {new Date(point.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
+                      </div>
+                      <span
+                        className="font-bold text-base"
+                        style={{ color: point.amount > 0 ? 'var(--pink-deep)' : '#9CA3AF' }}
+                      >
+                        {point.amount > 0 ? '+' : ''}{point.amount.toLocaleString()}P
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 로그아웃 */}
-        <button
-          onClick={handleLogout}
-          className="w-full py-3.5 rounded-2xl text-sm font-medium transition-colors hover:bg-pink-50 mb-10"
-          style={{ color: 'var(--text-light)', border: '1.5px solid var(--pink-light)' }}
-        >
-          로그아웃
-        </button>
-
+        </div>
       </div>
     </main>
   )
