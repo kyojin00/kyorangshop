@@ -1,12 +1,9 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function AuthConfirmPage() {
-  const router = useRouter()
-
   useEffect(() => {
     const supabase = createClient()
 
@@ -17,11 +14,10 @@ export default function AuthConfirmPage() {
 
     if (access_token && refresh_token) {
       supabase.auth.setSession({ access_token, refresh_token }).then(() => {
-        router.push('/')
-        router.refresh()
+        window.location.href = 'https://shop.kyorang.com'
       })
     } else {
-      router.push('/login')
+      window.location.href = 'https://shop.kyorang.com/login'
     }
   }, [])
 
