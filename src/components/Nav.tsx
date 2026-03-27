@@ -76,6 +76,9 @@ export default function Nav() {
               >
                 주문내역
               </Link>
+              <Link href="/mypage" className="text-sm px-4 py-2 rounded-full transition-colors hover:bg-pink-50" style={{ color: 'var(--text-mid)' }}>
+                마이페이지
+              </Link>
               <Link
                 href="/cart"
                 className="relative flex items-center gap-1.5 text-sm px-4 py-2 rounded-full transition-all hover:bg-pink-50"
