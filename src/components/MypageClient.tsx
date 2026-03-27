@@ -63,117 +63,80 @@ export default function MypageClient({
   }
 
   return (
-    <main className="pt-16 min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
-
-      {/* 상단 핑크 바 */}
-      <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #FFB6D3, #E8629A, #C97BB2)' }} />
+    <main className="min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
 
       {/* 프로필 헤더 */}
       <div
-        style={{ background: 'linear-gradient(160deg, #FFB6D3 0%, #E8629A 100%)' }}
-        className="pb-16 pt-10 px-4 text-center relative overflow-hidden"
+        className="relative overflow-hidden pt-20 pb-24 px-4 text-center"
+        style={{ background: 'linear-gradient(160deg, #FFCDE0 0%, #F0709E 60%, #C44D82 100%)' }}
       >
-        <div className="absolute top-4 right-[-30px] w-40 h-40 rounded-full opacity-15" style={{ backgroundColor: '#fff' }} />
-        <div className="absolute bottom-[-20px] left-[-20px] w-32 h-32 rounded-full opacity-10" style={{ backgroundColor: '#fff' }} />
+        {/* 배경 장식 원 */}
+        <div className="absolute top-[-40px] right-[-60px] w-56 h-56 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+        <div className="absolute bottom-[-30px] left-[-40px] w-44 h-44 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
+        <div className="absolute top-10 left-10 w-20 h-20 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }} />
 
         <div className="relative">
+          {/* 아바타 */}
           <div
-            className="w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center overflow-hidden"
-            style={{ backgroundColor: 'rgba(255,255,255,0.25)', border: '3px solid rgba(255,255,255,0.5)' }}
+            className="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.25)',
+              border: '3px solid rgba(255,255,255,0.6)',
+              boxShadow: '0 8px 24px rgba(180,40,100,0.25)',
+            }}
           >
-            <Image src="/logo.png" alt="프로필" width={48} height={48} />
+            <Image src="/logo.png" alt="프로필" width={52} height={52} />
           </div>
-          <p className="text-white font-bold text-lg">{email.split('@')[0]}</p>
+          <p className="text-white font-bold text-xl mb-1">{email.split('@')[0]}</p>
           <p className="text-white/70 text-sm">{email}</p>
         </div>
       </div>
 
-      {/* 스탯 카드 */}
-      <div className="max-w-2xl mx-auto px-4 -mt-8">
+      {/* 스탯 카드 - 헤더에 겹쳐서 떠오르는 형태 */}
+      <div className="max-w-lg mx-auto px-4 -mt-12 relative z-10">
         <div
-          className="bg-white rounded-3xl p-5 grid grid-cols-4 gap-2"
-          style={{ boxShadow: '0 4px 24px rgba(232,98,154,0.12)' }}
+          className="bg-white rounded-3xl p-5"
+          style={{ boxShadow: '0 8px 32px rgba(232,98,154,0.15)' }}
         >
-          {[
-            { label: '주문', value: orders.length, suffix: '건', action: () => setTab('orders') },
-            { label: '배송중', value: shippingCount, suffix: '건', action: () => setTab('orders') },
-            { label: '장바구니', value: cartCount, suffix: '개', action: () => router.push('/cart') },
-            { label: '포인트', value: totalPoints.toLocaleString(), suffix: 'P', action: () => setTab('points') },
-          ].map((stat, i) => (
-            <button
-              key={i}
-              onClick={stat.action}
-              className="flex flex-col items-center py-2 rounded-2xl transition-colors hover:bg-pink-50"
-            >
-              <p className="text-xl font-bold" style={{ color: 'var(--pink-deep)' }}>
-                {stat.value}
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-light)' }}>
-                {stat.label}
-              </p>
-            </button>
-          ))}
+          <div className="grid grid-cols-4 gap-1">
+            {[
+              { label: '전체주문', value: String(orders.length), unit: '건', action: () => setTab('orders') },
+              { label: '배송중', value: String(shippingCount), unit: '건', action: () => setTab('orders') },
+              { label: '장바구니', value: String(cartCount), unit: '개', action: () => router.push('/cart') },
+              { label: '포인트', value: totalPoints >= 1000 ? (totalPoints / 1000).toFixed(1) + 'K' : String(totalPoints), unit: 'P', action: () => setTab('points') },
+            ].map((stat, i) => (
+              <button
+                key={i}
+                onClick={stat.action}
+                className="flex flex-col items-center py-3 rounded-2xl transition-colors hover:bg-pink-50 group"
+              >
+                <p
+                  className="text-2xl font-bold leading-none mb-1 transition-colors group-hover:text-pink-500"
+                  style={{ color: 'var(--pink-deep)' }}
+                >
+                  {stat.value}
+                </p>
+                <p className="text-xs font-medium" style={{ color: 'var(--text-light)' }}>{stat.unit}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-light)', fontSize: '10px' }}>{stat.label}</p>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 빠른 메뉴 */}
-      <div className="max-w-2xl mx-auto px-4 mt-4">
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => router.push('/cart')}
-            className="bg-white rounded-2xl p-4 flex items-center gap-3 transition-all hover:shadow-md"
-            style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}
-          >
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: 'var(--peach)' }}
-            >
-              <svg width="18" height="18" fill="none" stroke="var(--pink-deep)" strokeWidth="1.8" viewBox="0 0 24 24">
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <path d="M16 10a4 4 0 01-8 0"/>
-              </svg>
-            </div>
-            <div className="text-left">
-              <p className="text-sm font-medium" style={{ color: 'var(--text-dark)' }}>장바구니</p>
-              <p className="text-xs" style={{ color: 'var(--text-light)' }}>{cartCount}개 담겨있어요</p>
-            </div>
-          </button>
+      <div className="max-w-lg mx-auto px-4 mt-5">
 
-          <button
-            onClick={() => router.push('/orders')}
-            className="bg-white rounded-2xl p-4 flex items-center gap-3 transition-all hover:shadow-md"
-            style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}
-          >
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: 'var(--peach)' }}
-            >
-              <svg width="18" height="18" fill="none" stroke="var(--pink-deep)" strokeWidth="1.8" viewBox="0 0 24 24">
-                <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
-                <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
-              </svg>
-            </div>
-            <div className="text-left">
-              <p className="text-sm font-medium" style={{ color: 'var(--text-dark)' }}>주문내역</p>
-              <p className="text-xs" style={{ color: 'var(--text-light)' }}>총 {orders.length}건</p>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      {/* 배송 중 주문 강조 */}
-      {shippingCount > 0 && (
-        <div className="max-w-2xl mx-auto px-4 mt-4">
+        {/* 배송 중 배너 */}
+        {shippingCount > 0 && (
           <div
-            className="rounded-2xl p-4 flex items-center gap-3"
-            style={{ background: 'linear-gradient(135deg, #FFE4EC, #FFB6D3)' }}
+            className="rounded-2xl p-4 flex items-center gap-3 mb-4"
+            style={{ background: 'linear-gradient(135deg, #FFE4EC, #FFCDE0)' }}
           >
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
+              className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: 'rgba(255,255,255,0.6)' }}
             >
-              <svg width="18" height="18" fill="none" stroke="var(--pink-deep)" strokeWidth="2" viewBox="0 0 24 24">
+              <svg width="20" height="20" fill="none" stroke="var(--pink-deep)" strokeWidth="1.8" viewBox="0 0 24 24">
                 <rect x="1" y="3" width="15" height="13" rx="1"/>
                 <path d="M16 8h4l3 5v4h-7V8z"/>
                 <circle cx="5.5" cy="18.5" r="2.5"/>
@@ -181,27 +144,84 @@ export default function MypageClient({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold" style={{ color: 'var(--pink-deep)' }}>배송 중인 주문이 {shippingCount}건 있어요</p>
-              <p className="text-xs" style={{ color: 'var(--text-mid)' }}>곧 도착할 거예요!</p>
+              <p className="text-sm font-bold" style={{ color: 'var(--pink-deep)' }}>
+                배송 중인 주문 {shippingCount}건
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-mid)' }}>곧 도착할 거예요!</p>
             </div>
+            <button
+              onClick={() => setTab('orders')}
+              className="ml-auto text-xs font-medium px-3 py-1.5 rounded-full bg-white transition-opacity hover:opacity-70"
+              style={{ color: 'var(--pink-deep)' }}
+            >
+              확인
+            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* 탭 */}
-      <div className="max-w-2xl mx-auto px-4 mt-6">
-        <div className="flex gap-2 mb-5">
+        {/* 빠른 메뉴 */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          {[
+            {
+              label: '장바구니',
+              sub: `${cartCount}개 담겨있어요`,
+              action: () => router.push('/cart'),
+              icon: (
+                <svg width="20" height="20" fill="none" stroke="var(--pink-deep)" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <path d="M16 10a4 4 0 01-8 0"/>
+                </svg>
+              ),
+            },
+            {
+              label: '주문내역',
+              sub: `총 ${orders.length}건`,
+              action: () => router.push('/orders'),
+              icon: (
+                <svg width="20" height="20" fill="none" stroke="var(--pink-deep)" strokeWidth="1.8" viewBox="0 0 24 24">
+                  <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+                  <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+                </svg>
+              ),
+            },
+          ].map((menu, i) => (
+            <button
+              key={i}
+              onClick={menu.action}
+              className="bg-white rounded-2xl p-4 flex items-center gap-3 text-left transition-all hover:shadow-md"
+              style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}
+            >
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: 'var(--peach)' }}
+              >
+                {menu.icon}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-dark)' }}>{menu.label}</p>
+                <p className="text-xs truncate" style={{ color: 'var(--text-light)' }}>{menu.sub}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* 탭 */}
+        <div
+          className="flex bg-white rounded-2xl p-1 mb-5"
+          style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}
+        >
           {(['orders', 'points'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className="px-5 py-2 rounded-full text-sm font-medium transition-all"
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all"
               style={tab === t
-                ? { backgroundColor: 'var(--pink-main)', color: 'white', boxShadow: '0 4px 12px rgba(232,98,154,0.35)' }
-                : { backgroundColor: 'white', color: 'var(--text-mid)', border: '1px solid var(--pink-light)' }
+                ? { backgroundColor: 'var(--pink-main)', color: 'white', boxShadow: '0 2px 8px rgba(232,98,154,0.3)' }
+                : { color: 'var(--text-light)' }
               }
             >
-              {t === 'orders' ? `주문내역 ${orders.length}` : `포인트 ${totalPoints.toLocaleString()}P`}
+              {t === 'orders' ? `주문내역 ${orders.length}건` : `포인트 ${totalPoints.toLocaleString()}P`}
             </button>
           ))}
         </div>
@@ -211,22 +231,33 @@ export default function MypageClient({
           <div className="space-y-3 mb-8">
             {orders.length === 0 ? (
               <div className="text-center py-16">
-                <Image src="/logo.png" alt="교랑" width={56} height={56} className="mx-auto opacity-25 mb-3" />
+                <Image src="/logo.png" alt="교랑" width={52} height={52} className="mx-auto opacity-20 mb-3" />
                 <p className="text-sm" style={{ color: 'var(--text-light)' }}>주문 내역이 없어요</p>
+                <button
+                  onClick={() => router.push('/')}
+                  className="mt-4 text-sm px-5 py-2 rounded-full text-white"
+                  style={{ backgroundColor: 'var(--pink-main)' }}
+                >
+                  쇼핑하러 가기
+                </button>
               </div>
             ) : orders.map(order => (
               <div
                 key={order.id}
-                className="bg-white rounded-2xl p-5"
+                className="bg-white rounded-2xl overflow-hidden"
                 style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}
               >
-                <div className="flex justify-between items-center mb-3">
+                {/* 주문 헤더 */}
+                <div
+                  className="px-5 py-3 flex items-center justify-between"
+                  style={{ backgroundColor: 'var(--peach)' }}
+                >
                   <div>
-                    <p className="text-xs" style={{ color: 'var(--text-light)' }}>
-                      {new Date(order.created_at).toLocaleDateString('ko-KR')}
+                    <p className="text-xs font-medium" style={{ color: 'var(--text-mid)' }}>
+                      {new Date(order.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-light)' }}>
-                      {order.id.slice(0, 8).toUpperCase()}
+                    <p className="text-xs" style={{ color: 'var(--text-light)' }}>
+                      주문번호 {order.id.slice(0, 8).toUpperCase()}
                     </p>
                   </div>
                   <span
@@ -237,23 +268,30 @@ export default function MypageClient({
                   </span>
                 </div>
 
-                <div className="space-y-1 mb-3">
-                  {order.shop_order_items.map((item, i) => (
-                    <div key={i} className="flex justify-between text-sm">
-                      <span style={{ color: 'var(--text-mid)' }}>{item.product_name} × {item.quantity}</span>
-                      <span style={{ color: 'var(--text-mid)' }}>{(item.product_price * item.quantity).toLocaleString()}원</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div
-                  className="flex justify-between items-center pt-3 border-t"
-                  style={{ borderColor: 'var(--pink-light)' }}
-                >
-                  <span className="text-sm" style={{ color: 'var(--text-light)' }}>총 결제금액</span>
-                  <span className="font-bold" style={{ color: 'var(--pink-deep)' }}>
-                    {order.total_amount.toLocaleString()}원
-                  </span>
+                {/* 주문 상품 */}
+                <div className="px-5 py-4">
+                  <div className="space-y-2 mb-3">
+                    {order.shop_order_items.map((item, i) => (
+                      <div key={i} className="flex justify-between items-center">
+                        <p className="text-sm flex-1 mr-4 truncate" style={{ color: 'var(--text-mid)' }}>
+                          {item.product_name}
+                          <span className="text-xs ml-1" style={{ color: 'var(--text-light)' }}>×{item.quantity}</span>
+                        </p>
+                        <p className="text-sm font-medium flex-shrink-0" style={{ color: 'var(--text-dark)' }}>
+                          {(item.product_price * item.quantity).toLocaleString()}원
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  <div
+                    className="flex justify-between items-center pt-3 border-t"
+                    style={{ borderColor: 'var(--pink-light)' }}
+                  >
+                    <span className="text-xs" style={{ color: 'var(--text-light)' }}>총 결제금액</span>
+                    <span className="font-bold" style={{ color: 'var(--pink-deep)' }}>
+                      {order.total_amount.toLocaleString()}원
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -263,16 +301,18 @@ export default function MypageClient({
         {/* 포인트 탭 */}
         {tab === 'points' && (
           <div className="mb-8">
-            {/* 포인트 잔액 */}
             <div
-              className="rounded-3xl p-6 mb-4 text-center"
-              style={{ background: 'linear-gradient(135deg, #FFB6D3, #E8629A)' }}
+              className="rounded-3xl p-6 mb-4 text-center relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, #FFCDE0, #E8629A)' }}
             >
-              <p className="text-white/80 text-sm mb-1">보유 포인트</p>
-              <p className="text-white font-bold text-4xl">{totalPoints.toLocaleString()}<span className="text-xl ml-1">P</span></p>
+              <div className="absolute top-[-20px] right-[-20px] w-32 h-32 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+              <p className="text-white/80 text-sm mb-2 relative">보유 포인트</p>
+              <p className="text-white font-bold text-5xl relative">
+                {totalPoints.toLocaleString()}
+                <span className="text-2xl ml-1 font-medium">P</span>
+              </p>
             </div>
 
-            {/* 포인트 내역 */}
             <div className="space-y-3">
               {points.length === 0 ? (
                 <div className="text-center py-12">
@@ -281,7 +321,7 @@ export default function MypageClient({
               ) : points.map((point, i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-2xl p-4 flex justify-between items-center"
+                  className="bg-white rounded-2xl px-5 py-4 flex justify-between items-center"
                   style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}
                 >
                   <div>
@@ -293,7 +333,7 @@ export default function MypageClient({
                     </p>
                   </div>
                   <span
-                    className="font-bold"
+                    className="font-bold text-base"
                     style={{ color: point.amount > 0 ? 'var(--pink-deep)' : '#9CA3AF' }}
                   >
                     {point.amount > 0 ? '+' : ''}{point.amount.toLocaleString()}P
@@ -307,11 +347,12 @@ export default function MypageClient({
         {/* 로그아웃 */}
         <button
           onClick={handleLogout}
-          className="w-full py-3 rounded-2xl text-sm transition-colors hover:bg-pink-50 mb-8"
-          style={{ color: 'var(--text-light)', border: '1px solid var(--pink-light)' }}
+          className="w-full py-3.5 rounded-2xl text-sm font-medium transition-colors hover:bg-pink-50 mb-10"
+          style={{ color: 'var(--text-light)', border: '1.5px solid var(--pink-light)' }}
         >
           로그아웃
         </button>
+
       </div>
     </main>
   )
