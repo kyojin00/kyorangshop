@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
@@ -16,6 +16,38 @@ interface Product {
   category: string | null
 }
 
+interface Review {
+  id: string
+  user_id: string
+  rating: number
+  content: string
+  created_at: string
+}
+
+function StarRating({ rating, onChange, size = 20 }: { rating: number; onChange?: (r: number) => void; size?: number }) {
+  const [hover, setHover] = useState(0)
+  return (
+    <div style={{ display: 'flex', gap: '4px' }}>
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange?.(star)}
+          onMouseEnter={() => onChange && setHover(star)}
+          onMouseLeave={() => onChange && setHover(0)}
+          style={{
+            background: 'none', border: 'none', cursor: onChange ? 'pointer' : 'default', padding: 0,
+            color: star <= (hover || rating) ? '#FBBF24' : '#E5E7EB',
+            fontSize: `${size}px`, lineHeight: 1,
+          }}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function ProductDetailClient({
   product,
   userId,
@@ -27,18 +59,45 @@ export default function ProductDetailClient({
   const [loading, setLoading] = useState(false)
   const [selectedImage, setSelectedImage] = useState(0)
   const [added, setAdded] = useState(false)
+
+  // 리뷰 상태
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [myReview, setMyReview] = useState<Review | null>(null)
+  const [reviewTab, setReviewTab] = useState<'list' | 'write'>('list')
+  const [rating, setRating] = useState(5)
+  const [content, setContent] = useState('')
+  const [reviewLoading, setReviewLoading] = useState(false)
+
   const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      const { data } = await supabase
+        .from('shop_reviews')
+        .select('*')
+        .eq('product_id', product.id)
+        .order('created_at', { ascending: false })
+      if (data) {
+        setReviews(data)
+        if (userId) {
+          const mine = data.find(r => r.user_id === userId) ?? null
+          setMyReview(mine)
+          if (mine) { setRating(mine.rating); setContent(mine.content) }
+        }
+      }
+    }
+    fetchReviews()
+  }, [product.id, userId])
+
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : null
 
   const handleAddCart = async () => {
     if (!userId) { router.push('/login'); return }
     setLoading(true)
-    const supabase = createClient()
-    const { data: existing } = await supabase
-      .from('shop_carts')
-      .select('id, quantity')
-      .eq('user_id', userId)
-      .eq('product_id', product.id)
-      .maybeSingle()
+    const { data: existing } = await supabase.from('shop_carts').select('id, quantity').eq('user_id', userId).eq('product_id', product.id).maybeSingle()
     if (existing) {
       await supabase.from('shop_carts').update({ quantity: existing.quantity + quantity }).eq('id', existing.id)
     } else {
@@ -52,13 +111,7 @@ export default function ProductDetailClient({
   const handleBuyNow = async () => {
     if (!userId) { router.push('/login'); return }
     setLoading(true)
-    const supabase = createClient()
-    const { data: existing } = await supabase
-      .from('shop_carts')
-      .select('id, quantity')
-      .eq('user_id', userId)
-      .eq('product_id', product.id)
-      .maybeSingle()
+    const { data: existing } = await supabase.from('shop_carts').select('id, quantity').eq('user_id', userId).eq('product_id', product.id).maybeSingle()
     if (existing) {
       await supabase.from('shop_carts').update({ quantity: existing.quantity + quantity }).eq('id', existing.id)
     } else {
@@ -68,9 +121,39 @@ export default function ProductDetailClient({
     router.push('/checkout')
   }
 
+  const handleSubmitReview = async () => {
+    if (!userId) { router.push('/login'); return }
+    if (!content.trim()) return
+    setReviewLoading(true)
+
+    if (myReview) {
+      const { data } = await supabase.from('shop_reviews').update({ rating, content }).eq('id', myReview.id).select().single()
+      if (data) {
+        setReviews(prev => prev.map(r => r.id === myReview.id ? data : r))
+        setMyReview(data)
+      }
+    } else {
+      const { data } = await supabase.from('shop_reviews').insert({ user_id: userId, product_id: product.id, rating, content }).select().single()
+      if (data) {
+        setReviews(prev => [data, ...prev])
+        setMyReview(data)
+      }
+    }
+    setReviewLoading(false)
+    setReviewTab('list')
+  }
+
+  const handleDeleteReview = async () => {
+    if (!myReview || !confirm('리뷰를 삭제할까요?')) return
+    await supabase.from('shop_reviews').delete().eq('id', myReview.id)
+    setReviews(prev => prev.filter(r => r.id !== myReview.id))
+    setMyReview(null)
+    setRating(5)
+    setContent('')
+  }
+
   return (
     <main className="pt-16 min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
-
       <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #FFB6D3, #E8629A, #C97BB2)' }} />
 
       <div className="max-w-5xl mx-auto px-4 py-10">
@@ -88,13 +171,9 @@ export default function ProductDetailClient({
 
         {/* 상품 기본 정보 */}
         <div className="grid md:grid-cols-2 gap-10 items-start">
-
           {/* 이미지 */}
           <div>
-            <div
-              className="relative aspect-square rounded-3xl overflow-hidden mb-3"
-              style={{ backgroundColor: 'var(--peach)' }}
-            >
+            <div className="relative aspect-square rounded-3xl overflow-hidden mb-3" style={{ backgroundColor: 'var(--peach)' }}>
               {product.images?.[selectedImage] ? (
                 <img src={product.images[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
               ) : (
@@ -103,10 +182,7 @@ export default function ProductDetailClient({
                 </div>
               )}
               {product.category && (
-                <div
-                  className="absolute top-4 left-4 text-xs px-3 py-1.5 rounded-full font-medium"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.9)', color: 'var(--pink-deep)' }}
-                >
+                <div className="absolute top-4 left-4 text-xs px-3 py-1.5 rounded-full font-medium" style={{ backgroundColor: 'rgba(255,255,255,0.9)', color: 'var(--pink-deep)' }}>
                   {product.category}
                 </div>
               )}
@@ -119,15 +195,9 @@ export default function ProductDetailClient({
             {product.images?.length > 1 && (
               <div className="flex gap-2">
                 {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
+                  <button key={i} onClick={() => setSelectedImage(i)}
                     className="w-16 h-16 rounded-xl overflow-hidden transition-all"
-                    style={{
-                      border: selectedImage === i ? '2.5px solid var(--pink-main)' : '2px solid transparent',
-                      opacity: selectedImage === i ? 1 : 0.6,
-                    }}
-                  >
+                    style={{ border: selectedImage === i ? '2.5px solid var(--pink-main)' : '2px solid transparent', opacity: selectedImage === i ? 1 : 0.6 }}>
                     <img src={img} alt="" className="w-full h-full object-cover" />
                   </button>
                 ))}
@@ -138,18 +208,22 @@ export default function ProductDetailClient({
           {/* 정보 */}
           <div className="flex flex-col gap-5">
             <div className="rounded-3xl p-6 bg-white" style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.08)' }}>
-              <h1 className="text-2xl font-bold leading-snug mb-3" style={{ color: 'var(--text-dark)' }}>
-                {product.name}
-              </h1>
+              <h1 className="text-2xl font-bold leading-snug mb-3" style={{ color: 'var(--text-dark)' }}>{product.name}</h1>
               <p className="text-3xl font-bold" style={{ color: 'var(--pink-deep)' }}>
-                {product.price.toLocaleString()}
-                <span className="text-base font-normal ml-1" style={{ color: 'var(--text-light)' }}>원</span>
+                {product.price.toLocaleString()}<span className="text-base font-normal ml-1" style={{ color: 'var(--text-light)' }}>원</span>
               </p>
-              <div className="mt-3 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: product.stock > 0 ? '#4CAF50' : '#ccc' }} />
-                <span className="text-sm" style={{ color: 'var(--text-light)' }}>
-                  {product.stock > 0 ? `재고 ${product.stock}개` : '품절'}
-                </span>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: product.stock > 0 ? '#4CAF50' : '#ccc' }} />
+                  <span className="text-sm" style={{ color: 'var(--text-light)' }}>{product.stock > 0 ? `재고 ${product.stock}개` : '품절'}</span>
+                </div>
+                {avgRating && (
+                  <div className="flex items-center gap-1">
+                    <span style={{ color: '#FBBF24', fontSize: '14px' }}>★</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-mid)' }}>{avgRating}</span>
+                    <span className="text-xs" style={{ color: 'var(--text-light)' }}>({reviews.length})</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -163,55 +237,29 @@ export default function ProductDetailClient({
               <div className="rounded-3xl p-6 bg-white" style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.08)' }}>
                 <p className="text-sm font-medium mb-3" style={{ color: 'var(--text-mid)' }}>수량</p>
                 <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
-                    style={{ backgroundColor: 'var(--peach)', color: 'var(--pink-deep)' }}
-                  >-</button>
+                  <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold" style={{ backgroundColor: 'var(--peach)', color: 'var(--pink-deep)' }}>-</button>
                   <span className="text-xl font-bold w-8 text-center" style={{ color: 'var(--text-dark)' }}>{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
-                    style={{ backgroundColor: 'var(--peach)', color: 'var(--pink-deep)' }}
-                  >+</button>
-                  <span className="text-sm ml-2 font-medium" style={{ color: 'var(--pink-deep)' }}>
-                    총 {(product.price * quantity).toLocaleString()}원
-                  </span>
+                  <button onClick={() => setQuantity(q => Math.min(product.stock, q + 1))} className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold" style={{ backgroundColor: 'var(--peach)', color: 'var(--pink-deep)' }}>+</button>
+                  <span className="text-sm ml-2 font-medium" style={{ color: 'var(--pink-deep)' }}>총 {(product.price * quantity).toLocaleString()}원</span>
                 </div>
               </div>
             )}
 
             <div className="flex flex-col gap-3">
-              <button
-                onClick={handleBuyNow}
-                disabled={loading || product.stock === 0}
+              <button onClick={handleBuyNow} disabled={loading || product.stock === 0}
                 className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all hover:opacity-90 disabled:opacity-50"
-                style={{
-                  background: product.stock > 0 ? 'linear-gradient(135deg, var(--pink-main), var(--pink-deep))' : '#ccc',
-                  boxShadow: product.stock > 0 ? '0 4px 16px rgba(232,98,154,0.4)' : 'none',
-                }}
-              >
+                style={{ background: product.stock > 0 ? 'linear-gradient(135deg, var(--pink-main), var(--pink-deep))' : '#ccc', boxShadow: product.stock > 0 ? '0 4px 16px rgba(232,98,154,0.4)' : 'none' }}>
                 {product.stock === 0 ? '품절' : '바로 구매'}
               </button>
-              <button
-                onClick={handleAddCart}
-                disabled={loading || product.stock === 0}
+              <button onClick={handleAddCart} disabled={loading || product.stock === 0}
                 className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50"
-                style={{
-                  backgroundColor: added ? 'var(--peach)' : 'white',
-                  color: 'var(--pink-deep)',
-                  border: '2px solid var(--pink-light)',
-                }}
-              >
+                style={{ backgroundColor: added ? 'var(--peach)' : 'white', color: 'var(--pink-deep)', border: '2px solid var(--pink-light)' }}>
                 {added ? '장바구니에 담겼어요!' : '장바구니 담기'}
               </button>
             </div>
 
             <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ backgroundColor: 'var(--peach)' }}>
-              {[
-                { icon: '📦', text: '주문 후 2~5일 내 발송' },
-                { icon: '🔄', text: '상품 불량 시 교환/환불 가능' },
-              ].map((item, i) => (
+              {[{ icon: '📦', text: '주문 후 2~5일 내 발송' }, { icon: '🔄', text: '상품 불량 시 교환/환불 가능' }].map((item, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <span>{item.icon}</span>
                   <span className="text-xs" style={{ color: 'var(--text-mid)' }}>{item.text}</span>
@@ -221,38 +269,132 @@ export default function ProductDetailClient({
           </div>
         </div>
 
-        {/* 상세 설명 섹션 */}
+        {/* 상세 설명 */}
         <div className="mt-16">
           <div className="flex border-b-2 mb-8" style={{ borderColor: 'var(--pink-light)' }}>
-            <div
-              className="px-6 py-3 text-sm font-bold border-b-2 -mb-0.5"
-              style={{ borderColor: 'var(--pink-main)', color: 'var(--pink-deep)' }}
-            >
+            <div className="px-6 py-3 text-sm font-bold border-b-2 -mb-0.5" style={{ borderColor: 'var(--pink-main)', color: 'var(--pink-deep)' }}>
               상품 상세
             </div>
           </div>
-
           {product.detail_content ? (
-            <div
-              className="rounded-3xl p-8 bg-white"
-              style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.06)' }}
-            >
-              <div
-                className="text-sm leading-loose whitespace-pre-wrap"
-                style={{ color: 'var(--text-mid)' }}
-              >
-                {product.detail_content}
-              </div>
+            <div className="rounded-3xl p-8 bg-white" style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.06)' }}>
+              <div className="text-sm leading-loose whitespace-pre-wrap" style={{ color: 'var(--text-mid)' }}>{product.detail_content}</div>
             </div>
           ) : (
-            <div
-              className="rounded-3xl p-12 text-center"
-              style={{ backgroundColor: 'var(--peach)' }}
-            >
-              <div className="mb-3">
-                <Image src="/logo.png" alt="교랑" width={48} height={48} className="mx-auto opacity-30" />
-              </div>
+            <div className="rounded-3xl p-12 text-center" style={{ backgroundColor: 'var(--peach)' }}>
+              <Image src="/logo.png" alt="교랑" width={48} height={48} className="mx-auto opacity-30 mb-3" />
               <p className="text-sm" style={{ color: 'var(--text-light)' }}>상세 설명을 준비 중이에요</p>
+            </div>
+          )}
+        </div>
+
+        {/* 리뷰 섹션 */}
+        <div className="mt-12">
+          <div className="flex items-center justify-between border-b-2 mb-8" style={{ borderColor: 'var(--pink-light)' }}>
+            <div className="flex">
+              {(['list', 'write'] as const).map(t => (
+                <button key={t} onClick={() => setReviewTab(t)}
+                  className="px-6 py-3 text-sm font-bold border-b-2 -mb-0.5 transition-colors"
+                  style={reviewTab === t ? { borderColor: 'var(--pink-main)', color: 'var(--pink-deep)' } : { borderColor: 'transparent', color: 'var(--text-light)' }}>
+                  {t === 'list' ? `리뷰 ${reviews.length}` : myReview ? '내 리뷰 수정' : '리뷰 작성'}
+                </button>
+              ))}
+            </div>
+            {avgRating && (
+              <div className="flex items-center gap-2 mb-2">
+                <span style={{ color: '#FBBF24', fontSize: '20px' }}>★</span>
+                <span className="text-xl font-bold" style={{ color: 'var(--text-dark)' }}>{avgRating}</span>
+                <span className="text-sm" style={{ color: 'var(--text-light)' }}>/ 5</span>
+              </div>
+            )}
+          </div>
+
+          {/* 리뷰 목록 */}
+          {reviewTab === 'list' && (
+            <div>
+              {reviews.length === 0 ? (
+                <div className="text-center py-16 rounded-3xl" style={{ backgroundColor: 'var(--peach)' }}>
+                  <Image src="/logo.png" alt="교랑" width={48} height={48} className="mx-auto opacity-25 mb-3" />
+                  <p className="text-sm" style={{ color: 'var(--text-mid)' }}>아직 리뷰가 없어요</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-light)' }}>첫 번째 리뷰를 남겨주세요!</p>
+                  {userId && (
+                    <button onClick={() => setReviewTab('write')}
+                      className="mt-4 text-sm px-5 py-2 rounded-full text-white"
+                      style={{ backgroundColor: 'var(--pink-main)' }}>
+                      리뷰 작성하기
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map(review => (
+                    <div key={review.id} className="bg-white rounded-2xl p-6" style={{ boxShadow: '0 2px 12px rgba(232,98,154,0.07)' }}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--peach)' }}>
+                            <Image src="/logo.png" alt="" width={20} height={20} className="opacity-50" />
+                          </div>
+                          <div>
+                            <StarRating rating={review.rating} size={16} />
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--text-light)' }}>
+                              {new Date(review.created_at).toLocaleDateString('ko-KR')}
+                            </p>
+                          </div>
+                        </div>
+                        {review.user_id === userId && (
+                          <div className="flex gap-2">
+                            <button onClick={() => setReviewTab('write')} className="text-xs px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--peach)', color: 'var(--pink-deep)' }}>수정</button>
+                            <button onClick={handleDeleteReview} className="text-xs px-3 py-1 rounded-full border border-red-200 text-red-400">삭제</button>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm leading-relaxed" style={{ color: 'var(--text-mid)' }}>{review.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 리뷰 작성 */}
+          {reviewTab === 'write' && (
+            <div className="bg-white rounded-3xl p-8" style={{ boxShadow: '0 2px 16px rgba(232,98,154,0.08)' }}>
+              {!userId ? (
+                <div className="text-center py-8">
+                  <p className="text-sm mb-4" style={{ color: 'var(--text-mid)' }}>로그인 후 리뷰를 작성할 수 있어요</p>
+                  <button onClick={() => router.push('/login')} className="text-sm px-5 py-2.5 rounded-full text-white" style={{ backgroundColor: 'var(--pink-main)' }}>로그인하기</button>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  <div>
+                    <p className="text-sm font-medium mb-3" style={{ color: 'var(--text-mid)' }}>별점</p>
+                    <StarRating rating={rating} onChange={setRating} size={32} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium mb-2" style={{ color: 'var(--text-mid)' }}>리뷰 내용</p>
+                    <textarea
+                      value={content}
+                      onChange={e => setContent(e.target.value)}
+                      placeholder="상품에 대한 솔직한 리뷰를 남겨주세요"
+                      rows={5}
+                      className="w-full rounded-2xl px-4 py-3 text-sm focus:outline-none resize-none"
+                      style={{ border: '1.5px solid var(--pink-light)', backgroundColor: 'var(--cream)', color: 'var(--text-dark)' }}
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={handleSubmitReview} disabled={reviewLoading || !content.trim()}
+                      className="flex-1 py-3.5 rounded-2xl text-white font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, var(--pink-main), var(--pink-deep))', boxShadow: '0 4px 16px rgba(232,98,154,0.35)' }}>
+                      {reviewLoading ? '저장 중...' : myReview ? '수정하기' : '등록하기'}
+                    </button>
+                    <button onClick={() => setReviewTab('list')}
+                      className="px-6 py-3.5 rounded-2xl text-sm font-medium"
+                      style={{ backgroundColor: 'var(--peach)', color: 'var(--text-mid)' }}>
+                      취소
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

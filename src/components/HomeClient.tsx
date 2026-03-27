@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import ProductCard from '@/components/ProductCard'
 
@@ -19,10 +19,17 @@ const CATEGORIES = [
 
 export default function HomeClient({ products }: { products: any[] }) {
   const [active, setActive] = useState('all')
+  const [search, setSearch] = useState('')
 
-  const filtered = active === 'all'
-    ? products
-    : products.filter(p => p.category === active)
+  const filtered = useMemo(() => {
+    let result = products
+    if (active !== 'all') result = result.filter(p => p.category === active)
+    if (search.trim()) result = result.filter(p =>
+      p.name.toLowerCase().includes(search.trim().toLowerCase()) ||
+      (p.description ?? '').toLowerCase().includes(search.trim().toLowerCase())
+    )
+    return result
+  }, [products, active, search])
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
@@ -35,19 +42,12 @@ export default function HomeClient({ products }: { products: any[] }) {
           minHeight: '420px',
         }}
       >
-        {/* 배경 원형 장식 */}
         <div className="absolute top-8 right-[-60px] w-72 h-72 rounded-full opacity-20" style={{ backgroundColor: '#fff' }} />
         <div className="absolute bottom-[-40px] left-[-40px] w-56 h-56 rounded-full opacity-15" style={{ backgroundColor: '#fff' }} />
 
         <div className="relative max-w-6xl mx-auto px-6 py-14 flex flex-col items-center text-center">
           <div className="animate-float mb-6 drop-shadow-2xl">
-            <Image
-              src="/logo.png"
-              alt="교랑"
-              width={120}
-              height={120}
-              priority
-            />
+            <Image src="/logo.png" alt="교랑" width={120} height={120} priority />
           </div>
           <h1
             className="font-display text-5xl md:text-6xl text-white mb-3"
@@ -55,9 +55,7 @@ export default function HomeClient({ products }: { products: any[] }) {
           >
             교랑샵
           </h1>
-          <p className="text-white/80 text-base mb-6">
-            교랑 캐릭터 공식 소품샵
-          </p>
+          <p className="text-white/80 text-base mb-6">교랑이 캐릭터 공식 소품샵</p>
           <div
             className="px-5 py-2 rounded-full text-sm"
             style={{ backgroundColor: 'rgba(255,255,255,0.25)', color: 'white', backdropFilter: 'blur(8px)' }}
@@ -74,9 +72,40 @@ export default function HomeClient({ products }: { products: any[] }) {
         </div>
       </div>
 
-      {/* 카테고리 필터 */}
       <div className="max-w-6xl mx-auto px-6 pt-8">
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+
+        {/* 검색창 */}
+        <div className="relative mb-5">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2">
+            <svg width="18" height="18" fill="none" stroke="var(--text-light)" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+          </div>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="상품 검색..."
+            className="w-full bg-white rounded-2xl pl-11 pr-4 py-3.5 text-sm focus:outline-none"
+            style={{
+              border: '1.5px solid var(--pink-light)',
+              color: 'var(--text-dark)',
+              boxShadow: '0 2px 12px rgba(232,98,154,0.07)',
+            }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-4 top-1/2 -translate-y-1/2"
+              style={{ color: 'var(--text-light)' }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* 카테고리 필터 */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-6" style={{ scrollbarWidth: 'none' }}>
           {CATEGORIES.map(cat => (
             <button
               key={cat.key}
@@ -95,20 +124,29 @@ export default function HomeClient({ products }: { products: any[] }) {
       </div>
 
       {/* 상품 목록 */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 pb-12">
+        {/* 검색 결과 안내 */}
+        {search && (
+          <p className="text-sm mb-4" style={{ color: 'var(--text-mid)' }}>
+            <span style={{ color: 'var(--pink-deep)', fontWeight: 700 }}>"{search}"</span> 검색 결과 {filtered.length}개
+          </p>
+        )}
+
         {filtered.length > 0 ? (
           <>
-            <div className="flex items-center gap-2 mb-6">
-              <span className="font-medium text-sm" style={{ color: 'var(--text-mid)' }}>
-                {active === 'all' ? '전체' : active}
-              </span>
-              <span
-                className="text-xs px-2.5 py-0.5 rounded-full"
-                style={{ backgroundColor: 'var(--peach)', color: 'var(--pink-deep)' }}
-              >
-                {filtered.length}개
-              </span>
-            </div>
+            {!search && (
+              <div className="flex items-center gap-2 mb-6">
+                <span className="font-medium text-sm" style={{ color: 'var(--text-mid)' }}>
+                  {active === 'all' ? '전체' : active}
+                </span>
+                <span
+                  className="text-xs px-2.5 py-0.5 rounded-full"
+                  style={{ backgroundColor: 'var(--peach)', color: 'var(--pink-deep)' }}
+                >
+                  {filtered.length}개
+                </span>
+              </div>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filtered.map((product, i) => (
                 <div
@@ -124,19 +162,27 @@ export default function HomeClient({ products }: { products: any[] }) {
         ) : (
           <div className="text-center py-24">
             <div className="animate-float inline-block mb-6">
-              <Image src="/logo.png" alt="교랑" width={72} height={72} className="opacity-50" />
+              <Image src="/logo.png" alt="교랑" width={72} height={72} className="opacity-30" />
             </div>
-            <p className="font-medium" style={{ color: 'var(--text-mid)' }}>해당 카테고리 상품이 없어요</p>
+            <p className="font-medium" style={{ color: 'var(--text-mid)' }}>
+              {search ? `"${search}"에 맞는 상품이 없어요` : '해당 카테고리 상품이 없어요'}
+            </p>
             <p className="text-sm mt-1" style={{ color: 'var(--text-light)' }}>곧 채워질 거예요!</p>
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="mt-4 text-sm px-5 py-2 rounded-full text-white"
+                style={{ backgroundColor: 'var(--pink-main)' }}
+              >
+                검색 초기화
+              </button>
+            )}
           </div>
         )}
       </div>
 
       {/* 푸터 */}
-      <footer
-        className="mt-12 py-10 text-center"
-        style={{ borderTop: '1px solid var(--pink-light)' }}
-      >
+      <footer className="mt-4 py-10 text-center" style={{ borderTop: '1px solid var(--pink-light)' }}>
         <div className="flex justify-center mb-2">
           <Image src="/logo.png" alt="교랑" width={28} height={28} />
         </div>
