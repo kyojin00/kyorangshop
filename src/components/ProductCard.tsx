@@ -61,4 +61,13 @@ export default function ProductCard({ product }: { product: Product }) {
           </p>
           <p
             className="font-bold text-base"
-            style={{ color: 'var(--deep-p
+            style={{ color: 'var(--deep-purple)' }}
+          >
+            {product.price.toLocaleString()}
+            <span className="text-xs font-normal ml-0.5">원</span>
+          </p>
+        </div>
+      </div>
+    </Link>
+  )
+}
