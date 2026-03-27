@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
-export default function CheckoutSuccessClient() {
-  const params = useSearchParams()
+export default function CheckoutSuccessPage() {
   const router = useRouter()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
     const pg_token = params.get('pg_token')
     const order_id = params.get('order_id')
 
