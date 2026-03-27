@@ -27,35 +27,34 @@ export default function ProductDetailClient({
   const router = useRouter()
 
   const handleAddCart = async () => {
-    if (!userId) {
-      router.push('/login')
-      return
-    }
-    setLoading(true)
-    const supabase = createClient()
+  if (!userId) {
+    router.push('/login')
+    return
+  }
+  setLoading(true)
+  const supabase = createClient()
 
-    const { data: existing } = await supabase
+  const { data: existing } = await supabase
+    .from('shop_carts')
+    .select('id, quantity')
+    .eq('user_id', userId)
+    .eq('product_id', product.id)
+    .maybeSingle()  // single() → maybeSingle()
+
+  if (existing) {
+    await supabase
       .from('shop_carts')
-      .select('id, quantity')
-      .eq('user_id', userId)
-      .eq('product_id', product.id)
-      .single()
-
-    if (existing) {
-      await supabase
-        .from('shop_carts')
-        .update({ quantity: existing.quantity + quantity })
-        .eq('id', existing.id)
-    } else {
-      await supabase
-        .from('shop_carts')
-        .insert({ user_id: userId, product_id: product.id, quantity })
-    }
-
-    setLoading(false)
-    router.push('/cart')
+      .update({ quantity: existing.quantity + quantity })
+      .eq('id', existing.id)
+  } else {
+    await supabase
+      .from('shop_carts')
+      .insert({ user_id: userId, product_id: product.id, quantity })
   }
 
+  setLoading(false)
+  router.push('/cart')
+}
   return (
     <main className="pt-16 min-h-screen" style={{ backgroundColor: 'var(--cream)' }}>
       <div className="max-w-4xl mx-auto px-4 py-12">
