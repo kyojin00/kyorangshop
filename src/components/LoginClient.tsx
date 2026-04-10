@@ -30,7 +30,7 @@ export default function LoginClient() {
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
-      options: { redirectTo: 'https://story.kyorang.com/auth/confirm' },
+      options: { redirectTo: 'https://shop.kyorang.com/auth/confirm' },
     })
   }
 
@@ -38,7 +38,7 @@ export default function LoginClient() {
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://story.kyorang.com/auth/confirm' },
+      options: { redirectTo: 'https://shop.kyorang.com/auth/confirm' },
     })
   }
 
